@@ -80,7 +80,7 @@ func computeEvent(ctx context.Context, chanSSE <-chan cdsclient.SSEvent, store *
 					fmt.Printf("unable to read payload of EventRunWorkflowNode: %v  %+v", err, e.Payload)
 					continue
 				}
-				cacheKey := fmt.Sprintf("%s-%d-%d-%s", e.WorkflowName, e.WorkflowRunNum, e.WorkflowRunNumSub, eventNR.NodeName)
+				cacheKey := fmt.Sprintf("%s-%d-%s", e.WorkflowName, e.WorkflowRunNum, eventNR.NodeName)
 				data := transform(e, eventNR)
 				store.Set(cacheKey, &data, 24*time.Hour)
 			}
@@ -98,12 +98,14 @@ func transform(e sdk.Event, eventNR sdk.EventRunWorkflowNode) Data {
 	}
 	for i, ss := range eventNR.StagesSummary {
 		sd := StageData{
+			ID:     ss.ID,
 			Name:   ss.Name,
 			Status: ss.Status.String(),
 			Jobs:   make([]JobData, len(ss.Jobs)),
 		}
 		for idx, j := range ss.Jobs {
 			jd := JobData{
+				ID:   j.PipelineActionID,
 				Name: j.Action.Name,
 			}
 			for _, k := range ss.RunJobsSummary {
