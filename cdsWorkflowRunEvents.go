@@ -28,6 +28,7 @@ func main() {
 			Host:  os.Getenv("CDS_HOST"),
 			User:  os.Getenv("CDS_USER"),
 			Token: os.Getenv("CDS_TOKEN"),
+			InsecureSkipVerifyTLS: true,
 		}
 		client := cdsclient.New(c)
 		fmt.Println("Connection to SSE")
