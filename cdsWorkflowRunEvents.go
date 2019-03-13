@@ -104,7 +104,7 @@ func computeEvent(ctx context.Context, chanSSE <-chan cdsclient.SSEvent, store *
 				}
 			case "sdk.EventRunWorkflowNode":
 				cacheKey := fmt.Sprintf("%s-%d-%s", e.WorkflowName, e.WorkflowRunNum, e.WorkflowName)
-				fmt.Printf("%s\n", cacheKey)
+				fmt.Printf("Cache key: %s\n", cacheKey)
 				var eventNR sdk.EventRunWorkflowNode
 				if err := mapstructure.Decode(e.Payload, &eventNR); err != nil {
 					fmt.Printf("unable to read payload of EventRunWorkflowNode: %v  %+v", err, e.Payload)
