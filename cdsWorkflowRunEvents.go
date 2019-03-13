@@ -23,12 +23,14 @@ func main() {
 	ctx := context.Background()
 	chanSSE := make(chan cdsclient.SSEvent, 10)
 	if true {
+		fmt.Println("Creating CDS Client")
 		c := cdsclient.Config{
-			Host:  os.Getenv("HOST"),
-			User:  os.Getenv("USER"),
-			Token: os.Getenv("PASSWORD"),
+			Host:  os.Getenv("CDS_HOST"),
+			User:  os.Getenv("CDS_USER"),
+			Token: os.Getenv("CDS_TOKEN"),
 		}
 		client := cdsclient.New(c)
+		fmt.Println("Connection to SSE")
 		go client.EventsListen(ctx, chanSSE)
 	} else {
 		go mock(chanSSE)
