@@ -4,32 +4,39 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/mitchellh/mapstructure"
+	"github.com/patrickmn/go-cache"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/patrickmn/go-cache"
-	"io/ioutil"
-	"time"
 )
 
 func main() {
+	//debug := flag.Bool("debug", false, "debug mode")
 	store := cache.New(24*time.Hour, 10*time.Minute)
 
-	c := cdsclient.Config{
-		Host:  "",
-		User:  "",
-		Token: "",
-	}
-
-	client := cdsclient.New(c)
-
 	ctx := context.Background()
-	chanSSE := make(chan cdsclient.SSEvent)
-	go client.EventsListen(ctx, chanSSE)
+	chanSSE := make(chan cdsclient.SSEvent, 10)
+	if true {
+		c := cdsclient.Config{
+			Host:  os.Getenv("HOST"),
+			User:  os.Getenv("USER"),
+			Token: os.Getenv("PASSWORD"),
+		}
+		client := cdsclient.New(c)
+		go client.EventsListen(ctx, chanSSE)
+	} else {
+		go mock(chanSSE)
+	}
 	go computeEvent(ctx, chanSSE, store)
 
 	r := gin.Default()
+	r.Use(CORSMiddleware())
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
@@ -49,8 +56,25 @@ func main() {
 			"count": store.ItemCount(),
 		})
 	})
+
 	r.Run() // listen and serve on 0.0.0.0:8080
 
+}
+
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(200)
+		} else {
+			c.Next()
+		}
+	}
 }
 
 func computeEvent(ctx context.Context, chanSSE <-chan cdsclient.SSEvent, store *cache.Cache) {
@@ -64,6 +88,7 @@ func computeEvent(ctx context.Context, chanSSE <-chan cdsclient.SSEvent, store *
 			var e sdk.Event
 			content, _ := ioutil.ReadAll(evt.Data)
 			_ = json.Unmarshal(content, &e)
+			fmt.Printf("Received: %s\n", e.EventType)
 			if e.EventType == "" {
 				continue
 			}
