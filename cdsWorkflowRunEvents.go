@@ -23,12 +23,15 @@ func main() {
 	ctx := context.Background()
 	chanSSE := make(chan cdsclient.SSEvent, 10)
 	if true {
+		fmt.Println("Creating CDS Client")
 		c := cdsclient.Config{
-			Host:  os.Getenv("HOST"),
-			User:  os.Getenv("USER"),
-			Token: os.Getenv("PASSWORD"),
+			Host:  os.Getenv("CDS_HOST"),
+			User:  os.Getenv("CDS_USER"),
+			Token: os.Getenv("CDS_TOKEN"),
+			InsecureSkipVerifyTLS: true,
 		}
 		client := cdsclient.New(c)
+		fmt.Println("Connection to SSE")
 		go client.EventsListen(ctx, chanSSE)
 	} else {
 		go mock(chanSSE)
@@ -57,7 +60,7 @@ func main() {
 		})
 	})
 
-	r.Run() // listen and serve on 0.0.0.0:8080
+	r.Run("0.0.0.0:8080") // listen and serve on 0.0.0.0:8080
 
 }
 
@@ -100,6 +103,8 @@ func computeEvent(ctx context.Context, chanSSE <-chan cdsclient.SSEvent, store *
 					continue
 				}
 				cacheKey := fmt.Sprintf("%s-%d-%s", e.WorkflowName, e.WorkflowRunNum, eventNR.NodeName)
+				fmt.Printf("Cache key: %s\n", cacheKey)
+
 				data := transform(e, eventNR)
 				store.Set(cacheKey, &data, 24*time.Hour)
 			}
