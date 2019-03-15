@@ -93,12 +93,6 @@ func computeEvent(ctx context.Context, chanSSE <-chan cdsclient.SSEvent, store *
 				continue
 			}
 			switch e.EventType {
-			case "sdk.EventRunWorkflow":
-				var eventWR sdk.EventRunWorkflow
-				if err := mapstructure.Decode(e.Payload, &eventWR); err != nil {
-					fmt.Printf("unable to read payload of EventRunWorkflow: %v  %+v", err, e.Payload)
-					continue
-				}
 			case "sdk.EventRunWorkflowNode":
 				var eventNR sdk.EventRunWorkflowNode
 				if err := mapstructure.Decode(e.Payload, &eventNR); err != nil {
@@ -119,6 +113,7 @@ func transform(e sdk.Event, eventNR sdk.EventRunWorkflowNode) Data {
 		Number:       e.WorkflowRunNum,
 		SubNumber:    e.WorkflowRunNumSub,
 		NodeName:     eventNR.NodeName,
+		NodeType:     eventNR.NodeType,
 		Stages:       make([]StageData, len(eventNR.StagesSummary)),
 	}
 	for i, ss := range eventNR.StagesSummary {

@@ -5,6 +5,7 @@ type Data struct {
 	Number       int64       `json:"num"`
 	SubNumber    int64       `json:"sub_num"`
 	NodeName     string      `json:"node_name"`
+	NodeType     string      `json:"node_type"`
 	Stages       []StageData `json:"stages"`
 }
 

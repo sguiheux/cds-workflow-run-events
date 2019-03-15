@@ -27,7 +27,7 @@ func mock(c chan cdsclient.SSEvent) {
 
 		go continueWorkflow(cpt, w, c)
 
-		if cpt == 10 {
+		if cpt == 36 {
 			break
 		}
 	}
